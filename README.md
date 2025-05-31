@@ -86,7 +86,7 @@ Make sure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/resume-chatbot.git
+git clone https://github.com/petrosg8/resume-chatbot.git
 cd resume-chatbot
 ```
 
