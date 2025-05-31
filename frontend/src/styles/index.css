@@ -16,7 +16,7 @@ body,
   scroll-behavior: smooth;
 }
 
-/*  Custom scrollbar for the chat messages area */
+ /* Custom scrollbar for the chat messages area
 .chat-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -25,4 +25,4 @@ body,
 }
 .chat-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-gray-300 rounded;
-}
+} */
