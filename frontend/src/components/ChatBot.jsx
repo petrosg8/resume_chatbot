@@ -9,8 +9,12 @@ import MessageInput from "./MessageInput";
 export default function ChatBot() {
   // messages: array of { sender: "user" | "bot", text: string }
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "👋 Hi there! Ask me anything about my CV." },
-  ]);
+    {
+      sender: "bot",
+      text: "👋 Hi there! Ask me anything about my CV.",
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    },
+  ])
 
   // Reference to auto-scroll to bottom
   const bottomRef = useRef(null);
@@ -20,48 +24,67 @@ export default function ChatBot() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+   // Utility to get a “HH:MM” timestamp
+   function getTimestamp() {
+    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
   // Called when user types OR clicks a sample question
   async function handleSend(userText) {
     if (!userText.trim()) return;
 
-    // 1) Add the user's message immediately
-    setMessages((prev) => [...prev, { sender: "user", text: userText.trim() }]);
+    // Add the user's message with timestamp
+    const userMsg = {
+      sender: "user",
+      text: userText.trim(),
+      time: getTimestamp(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
 
-    // 2) Add a "thinking" placeholder for the bot
-    setMessages((prev) => [...prev, { sender: "bot", text: "🤖 Thinking..." }]);
+    // Add a “thinking” placeholder with timestamp
+    const thinkingMsg = {
+        sender: "bot",
+        text: "🤖 Thinking...",
+        time: getTimestamp(),
+      };
+      setMessages((prev) => [...prev, thinkingMsg]);
 
-    try {
-      // 3) Send POST to Flask backend
-      const response = await axios.post("http://127.0.0.1:5000/chat", {
-        prompt: userText.trim(),
-      });
-
-      const botReply = response.data.reply || "Sorry, no reply received.";
-
-      // 4) Replace the "Thinking..." placeholder with the real reply
-      setMessages((prev) => {
-        // Remove the last placeholder entry (the one with text "🤖 Thinking...")
-        const withoutPlaceholder = prev.filter(
-          (msg, idx) => !(msg.sender === "bot" && msg.text === "🤖 Thinking..." && idx === prev.length - 1)
-        );
-        // Append the actual reply
-        return [...withoutPlaceholder, { sender: "bot", text: botReply }];
-      });
-    } catch (err) {
-      console.error("Error fetching reply:", err);
-
-      // On error, replace the placeholder with an error message
-      setMessages((prev) => {
-        const withoutPlaceholder = prev.filter(
-          (msg, idx) => !(msg.sender === "bot" && msg.text === "🤖 Thinking..." && idx === prev.length - 1)
-        );
-        return [
-          ...withoutPlaceholder,
-          { sender: "bot", text: "😕 Oops! Something went wrong. Please try again." },
-        ];
-      });
+      try {
+        // Send POST to Flask backend
+        const response = await axios.post("http://127.0.0.1:5000/chat", {
+          prompt: userText.trim(),
+        });
+  
+        const botReplyText = response.data.reply || "Sorry, no reply received.";
+        const botMsg = {
+          sender: "bot",
+          text: botReplyText,
+          time: getTimestamp(),
+        };
+  
+        //  Replace the thinking placeholder with actual botReply
+        setMessages((prev) => {
+          // Filter out exactly the last “🤖 Thinking...” placeholder
+          const withoutPlaceholder = prev.filter(
+            (msg, idx) => !(msg.sender === "bot" && msg.text === "🤖 Thinking..." && idx === prev.length - 1)
+          );
+          return [...withoutPlaceholder, botMsg];
+        });
+      } catch (err) {
+        console.error("Error fetching reply:", err);
+        const errorMsg = {
+          sender: "bot",
+          text: "😕 Oops! Something went wrong. Please try again.",
+          time: getTimestamp(),
+        };
+        setMessages((prev) => {
+          const withoutPlaceholder = prev.filter(
+            (msg, idx) => !(msg.sender === "bot" && msg.text === "🤖 Thinking..." && idx === prev.length - 1)
+          );
+          return [...withoutPlaceholder, errorMsg];
+        });
+      }
     }
-  }
 
   return (
     <div className="flex-1 flex flex-col h-full">
