@@ -7,13 +7,14 @@ import {
   MoonIcon,
   TrashIcon,
   DocumentIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/solid";
 import MessageList from "./MessageList";
 import SampleQuestions from "./SampleQuestions";
 import MessageInput from "./MessageInput";
 
 export default function ChatBot() {
-  // ─── Theme State (Light / Dark Toggle) ─────────────────────────────────────
+  // ───  Theme State (Light / Dark Toggle) ─────────────────────────────────
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem("theme");
     if (stored === "dark") return true;
@@ -36,12 +37,9 @@ export default function ChatBot() {
     setIsDark((prev) => !prev);
   }
 
-  // ─── Chat History State & Persistence ────────────────────────────────────────
+  // ───  Chat History State & Persistence ────────────────────────────────────
   function getTimestamp() {
-    return new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
   const initialGreeting = {
@@ -69,13 +67,13 @@ export default function ChatBot() {
     localStorage.setItem("chatHistory", JSON.stringify(messages));
   }, [messages]);
 
-  // ─── Scroll to Bottom on New Messages ────────────────────────────────────────
+  // ───  Scroll to Bottom on New Messages ────────────────────────────────────
   const bottomRef = useRef(null);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ─── Clear Chat Functionality ─────────────────────────────────────────────────
+  // ───  Clear Chat Functionality ────────────────────────────────────────────
   function handleClearChat() {
     if (window.confirm("Are you sure you want to clear the chat history?")) {
       const freshGreeting = {
@@ -88,8 +86,25 @@ export default function ChatBot() {
     }
   }
 
-  // ─── Download Transcript Functionality ───────────────────────────────────────
-  function handleDownload() {
+  // ───  Copy Transcript Functionality (using DocumentIcon) ─────────────────
+  async function handleCopyTranscript() {
+    if (messages.length === 0) return;
+    const lines = messages.map((msg) =>
+      `[${msg.time}] ${msg.sender === "user" ? "You" : "Bot"}: ${msg.text}`
+    );
+    const transcript = lines.join("\n");
+    try {
+      await navigator.clipboard.writeText(transcript);
+      // Optionally, you could show a small confirmation (alert or toast) here:
+      // alert("Chat transcript copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy transcript:", err);
+      // Optionally: alert("Unable to copy transcript. Please try again.");
+    }
+  }
+
+  // ───  Download Transcript Functionality (using ArrowDownTrayIcon) ─────────
+  function handleDownloadTranscript() {
     if (messages.length === 0) return;
     const lines = messages.map((msg) =>
       `[${msg.time}] ${msg.sender === "user" ? "You" : "Bot"}: ${msg.text}`
@@ -106,14 +121,16 @@ export default function ChatBot() {
     URL.revokeObjectURL(url);
   }
 
-  // ─── Sending a New Message to the Bot ────────────────────────────────────────
+  // ───  Sending a New Message to the Bot ─────────────────────────────────────
   async function handleSend(userText) {
     if (!userText.trim()) return;
     const now = getTimestamp();
 
+    //  Append user's message
     const newUserMsg = { sender: "user", text: userText.trim(), time: now };
     setMessages((prev) => [...prev, newUserMsg]);
 
+    //  Append “Thinking…” placeholder
     const thinkingMsg = { sender: "bot", text: "🤖 Thinking...", time: now };
     setMessages((prev) => [...prev, thinkingMsg]);
 
@@ -123,12 +140,9 @@ export default function ChatBot() {
       });
       const botReplyText = response.data.reply || "Sorry, no reply received.";
       const replyTimestamp = getTimestamp();
-      const botMsg = {
-        sender: "bot",
-        text: botReplyText,
-        time: replyTimestamp,
-      };
+      const botMsg = { sender: "bot", text: botReplyText, time: replyTimestamp };
 
+      //  Replace the last “Thinking…” placeholder with the real reply
       setMessages((prev) => {
         const withoutPlaceholder = prev.filter(
           (msg, idx) =>
@@ -161,12 +175,12 @@ export default function ChatBot() {
     }
   }
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
+  // ───  Render ───────────────────────────────────────────────────────────────
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* ─── Scrollable region with Sticky Header ──────────────────────────────── */}
       <div className="h-0 flex-1 overflow-y-auto chat-scrollbar bg-gray-100 dark:bg-gray-900 scroll-smooth">
-        {/* Sticky header*/}
+        {/* Sticky header: title + Clear + Copy + Download + Theme Toggle */}
         <div className="sticky top-0 z-10 bg-teal-500 dark:bg-teal-700 px-6 py-4 flex items-center justify-between">
           <h1 className="text-white text-xl font-semibold">
             Petros Gerogiannis
@@ -182,14 +196,24 @@ export default function ChatBot() {
               <TrashIcon className="h-6 w-6 text-white" />
             </button>
 
+            {/* Copy Transcript Button */}
+            <button
+              onClick={handleCopyTranscript}
+              title="Copy chat transcript to clipboard"
+              className="p-1 rounded-full bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-300"
+              aria-label="Copy chat transcript"
+            >
+              <DocumentIcon className="h-6 w-6 text-white" />
+            </button>
+
             {/* Download Transcript Button */}
             <button
-              onClick={handleDownload}
+              onClick={handleDownloadTranscript}
               title="Download chat transcript"
               className="p-1 rounded-full bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-300"
               aria-label="Download chat transcript"
             >
-              <DocumentIcon className="h-6 w-6 text-white" />
+              <ArrowDownTrayIcon className="h-6 w-6 text-white" />
             </button>
 
             {/* Theme Toggle Button */}
