@@ -4,26 +4,25 @@
 @tailwind components;
 @tailwind utilities;
 
-
 html {
   height: 100%;
-  background-color: theme("colors.gray.50");
-}
-body {
-  height: 100%;
-  margin: 0; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: inherit;
-}
-#root {
-  height: 100%;
-  background-color: inherit;
+  background-color: theme("colors.gray.50"); 
 }
 
+body {
+  height: 100%;
+  margin: 0;                    
+  background-color: inherit;    /* Inherit from html */
+}
+
+#root {
+  height: 100%;
+  background-color: inherit;    /* Inherit from html */
+}
+
+/* When <html class="dark"> is present, switch to dark‐gray background */
 .dark html {
-  background-color: theme("colors.gray.900");
+  background-color: theme("colors.gray.900"); /* Dark mode background */
 }
 .dark body {
   background-color: inherit;
@@ -33,14 +32,7 @@ body {
 }
 
 /* ───────────────────────────────────────────────────────────────
-   Smooth‐scrolling utility
-──────────────────────────────────────────────────────────────── */
-.scroll-smooth {
-  scroll-behavior: smooth;
-}
-
-/* ───────────────────────────────────────────────────────────────
-   Custom scrollbar (light/dark thumb)
+   Custom scrollbar styling (light/dark thumb)
 ──────────────────────────────────────────────────────────────── */
 .chat-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -48,11 +40,18 @@ body {
 .chat-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-/* Light‐mode thumb */
+/* Light mode thumb */
 .chat-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-gray-300 rounded;
 }
-/* Dark‐mode thumb override */
+/* Dark mode thumb override */
 .dark .chat-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-gray-600 rounded;
+}
+
+/* ───────────────────────────────────────────────────────────────
+    Smooth‐scroll utility (for chat scrolling)
+──────────────────────────────────────────────────────────────── */
+.scroll-smooth {
+  scroll-behavior: smooth;
 }

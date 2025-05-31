@@ -7,7 +7,6 @@ export const SAMPLE_QUESTIONS = [
   "What projects have you worked on?",
   "What are your skills?",
   "Where did you study?",
-  "What are your hobbies?",
 ];
 
 export default function SampleQuestions({ onAsk }) {

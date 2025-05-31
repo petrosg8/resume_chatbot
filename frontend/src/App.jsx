@@ -1,17 +1,12 @@
-// frontend/src/App.jsx
+// frontend/src/App.js
 import React from "react";
 import ChatBot from "./components/ChatBot";
 
 function App() {
   return (
-    <div className="w-full max-w-lg mx-auto p-4">
-    {/*
-        Chat card container:
-        - bg-white (light) / dark:bg-gray-800 (dark)
-        - rounded-2xl + shadow-lg
-        - h-[80vh], flex-col, overflow-hidden
-      */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg h-[80vh] flex flex-col overflow-hidden">
+    <div className="w-full h-full">
+      {}
+      <div className="w-full h-full bg-white dark:bg-gray-800 flex flex-col overflow-hidden">
         <ChatBot />
       </div>
     </div>
