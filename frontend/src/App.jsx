@@ -4,8 +4,8 @@ import ChatBot from "./components/ChatBot";
 
 function App() {
   return (
-    <div className="w-full max-w-md mx-auto p-4">
-      {/*
+    <div className="w-full max-w-lg mx-auto p-4">
+    {/*
         Chat card container:
         - bg-white (light) / dark:bg-gray-800 (dark)
         - rounded-2xl + shadow-lg

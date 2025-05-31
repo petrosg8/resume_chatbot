@@ -2,17 +2,18 @@
 
 import React from "react";
 
-export default function SampleQuestions({ onAsk }) {
-  const samples = [
-    "Tell me something about yourself.",
-    "What projects have you worked on?",
-    "What are your skills?",
-    "Where did you study?",
-  ];
+export const SAMPLE_QUESTIONS = [
+  "Tell me something about yourself.",
+  "What projects have you worked on?",
+  "What are your skills?",
+  "Where did you study?",
+  "What are your hobbies?",
+];
 
+export default function SampleQuestions({ onAsk }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {samples.map((q, idx) => (
+      {SAMPLE_QUESTIONS.map((q, idx) => (
         <button
           key={idx}
           onClick={() => onAsk(q)}
