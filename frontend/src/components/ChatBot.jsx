@@ -1,54 +1,66 @@
 // frontend/src/components/ChatBot.jsx
+
 import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import MessageList from "./MessageList";
 import SampleQuestions from "./SampleQuestions";
 import MessageInput from "./MessageInput";
 
 export default function ChatBot() {
+  // messages: array of { sender: "user" | "bot", text: string }
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "👋 Hi there! Ask me anything about my resume." },
+    { sender: "bot", text: "👋 Hi there! Ask me anything about my CV." },
   ]);
 
+  // Reference to auto-scroll to bottom
   const bottomRef = useRef(null);
 
+  // Whenever messages change, scroll to the bottom:
   useEffect(() => {
-    // Whenever messages change, scroll down to the bottom
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  function handleSend(userText) {
+  // Called when user types OR clicks a sample question
+  async function handleSend(userText) {
     if (!userText.trim()) return;
 
-    //  user message
-    setMessages((prev) => [
-      ...prev,
-      { sender: "user", text: userText.trim() },
-    ]);
+    // 1) Add the user's message immediately
+    setMessages((prev) => [...prev, { sender: "user", text: userText.trim() }]);
 
-    // “thinking” placeholder for the bot
-    setMessages((prev) => [
-      ...prev,
-      { sender: "bot", text: "🤖 Let me think..." },
-    ]);
+    // 2) Add a "thinking" placeholder for the bot
+    setMessages((prev) => [...prev, { sender: "bot", text: "🤖 Thinking..." }]);
 
-    // 3) After a short delay, replace the placeholder with a real reply
-    setTimeout(() => {
+    try {
+      // 3) Send POST to Flask backend
+      const response = await axios.post("http://127.0.0.1:5000/chat", {
+        prompt: userText.trim(),
+      });
+
+      const botReply = response.data.reply || "Sorry, no reply received.";
+
+      // 4) Replace the "Thinking..." placeholder with the real reply
       setMessages((prev) => {
-        // Remove the placeholder
+        // Remove the last placeholder entry (the one with text "🤖 Thinking...")
         const withoutPlaceholder = prev.filter(
-          (msg) => msg.text !== "🤖 Let me think..."
+          (msg, idx) => !(msg.sender === "bot" && msg.text === "🤖 Thinking..." && idx === prev.length - 1)
         );
+        // Append the actual reply
+        return [...withoutPlaceholder, { sender: "bot", text: botReply }];
+      });
+    } catch (err) {
+      console.error("Error fetching reply:", err);
 
-        // TODO: implement backend functionality
+      // On error, replace the placeholder with an error message
+      setMessages((prev) => {
+        const withoutPlaceholder = prev.filter(
+          (msg, idx) => !(msg.sender === "bot" && msg.text === "🤖 Thinking..." && idx === prev.length - 1)
+        );
         return [
           ...withoutPlaceholder,
-          {
-            sender: "bot",
-            text: `You said: "${userText}". (Real reply via HTTP coming soon!)`,
-          },
+          { sender: "bot", text: "😕 Oops! Something went wrong. Please try again." },
         ];
       });
-    }, 800);
+    }
   }
 
   return (
