@@ -132,29 +132,6 @@ frontend/
      * TailwindCSS
      * Axios
      * @heroicons/react
-3. (Optional) Verify that `tailwind.config.js` and `postcss.config.js` exist and are configured:
-
-   ```js
-   // frontend/tailwind.config.js
-   module.exports = {
-     darkMode: "class",    // enable 'dark:' variants
-     content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
-     theme: {
-       extend: {},
-     },
-     plugins: [],
-   };
-   ```
-
-   ```js
-   // frontend/postcss.config.js
-   module.exports = {
-     plugins: {
-       tailwindcss: {},
-       autoprefixer: {},
-     },
-   };
-   ```
 
 ---
 
