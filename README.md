@@ -40,9 +40,6 @@ A simple AI-like chatbot web application that answers questions about my resume/
 
   * 📄 (Document icon): copies the entire chat transcript to the clipboard.
   * ⬇️ (Download tray icon): downloads a `.txt` file of the transcript.
-* **Sticky Header**
-
-  * Title, clear/copy/download/transcript buttons, and theme toggle remain visible even when scrolling through long chats.
 
 ---
 
