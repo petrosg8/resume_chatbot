@@ -70,7 +70,6 @@ Make sure you have the following installed:
 
 * **Node.js** (v14+ recommended) and `npm` (which comes with Node.js)
 * **Python** (v3.9 or newer) and `pip`
-* A modern web browser (Chrome, Firefox, Safari, Edge)
 
 ---
 
