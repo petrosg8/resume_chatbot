@@ -1,65 +1,91 @@
 # backend/app.py
 
-import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# Import RESPONSES dictionary and configuration
 from responses import RESPONSES
-from config import Config
 
-def find_reply(prompt: str) -> str:
-    """
-    Look for the first key in RESPONSES whose keywords are ALL found in the prompt.
-    - lowercase everything for a case-insensitive match.
-    - If none match, return a default fallback.
-    """
-    prompt_lower = prompt.lower()
-
-    for keywords, answer in RESPONSES.items():
-        # Check if every keyword is contained in the prompt
-        if all(keyword in prompt_lower for keyword in keywords):
-            return answer
-
-    # Fallback response if no keywords match
-    return (
-        "Sorry, I don’t have an answer for that yet. "
-        "Feel free to ask about my projects, skills, education, or hobbies!"
-    )
-
-# ─── Create Flask app ───────────────────────────────────────────────────────────
 app = Flask(__name__)
-# Load config from config.py (e.g., DEBUG flag)
-app.config.from_object(Config)
-
-# Allow any origin to access /chat 
+# Allow all origins for /chat
 CORS(app, resources={r"/chat": {"origins": "*"}})
 
-# ─── Define the /chat endpoint ───────────────────────────────────────────────────
+
+# ───   simple synonyms dictionary ───────────────────────────────────
+SYNONYMS = {
+    "skillset": ["skills"],
+    "competencies": ["skills"],
+    "expertise": ["skills"],
+    "cv": ["resume"],         
+    "profile": ["resume"],
+    "devops": ["docker", "kubernetes"],
+    "containers": ["docker", "kubernetes"],
+    "cloud": ["aws", "lambda", "azure"],
+    "uni": ["study", "education", "school"],
+    "degree": ["education"],
+    "hobby": ["hobbies"],
+    "interest": ["hobbies"],
+}
+
+
+# ───  Helper to expand the raw prompt with synonyms ─────────────────────────
+def expand_with_synonyms(prompt: str) -> str:
+    """
+    Given a raw prompt (string), look at each word. If any word appears in our
+    SYNONYMS dict, append its mapped synonyms to the end of the prompt.
+    Returns a single string (lowercased).
+    """
+    lower_prompt = prompt.lower()
+    words = lower_prompt.split()
+    extras = []
+
+    for w in words:
+        if w in SYNONYMS:
+            extras.extend(SYNONYMS[w])
+
+    if extras:
+        # Append extra keywords so find_reply(...) can match them as if they were typed
+        return lower_prompt + " " + " ".join(extras)
+    else:
+        return lower_prompt
+
+
+# ───   reply‐lookup function  ──────────────────
+def find_reply(expanded_prompt: str) -> str:
+    """
+    Look through RESPONSES, which is a dict mapping a tuple of keywords to a reply.
+    The first reply whose ALL keywords appear in expanded_prompt is returned.
+    If no match, return a default fallback.
+    """
+    for keyword_tuple, reply_text in RESPONSES.items():
+        # Check if every keyword in the tuple is present as a substring in expanded_prompt
+        if all(k in expanded_prompt for k in keyword_tuple):
+            return reply_text
+
+    # If nothing matched, return a generic fallback:
+    return (
+        "Sorry, I don't have an answer for that yet. "
+        "Feel free to ask about my education, technical skills, projects, "
+        "or specific technologies like Docker, Kubernetes, or AWS."
+    )
+
+
+# ───  /chat endpoint ─────────────────
 @app.route("/chat", methods=["POST"])
 def chat():
-    """
-    Expects JSON: { "prompt": "<user's question>" }
-    Returns JSON: { "reply": "<bot's response>" }
-    """
-    # Parse JSON from the request body
     data = request.get_json(force=True)
+    raw_prompt = data.get("prompt", "").strip()
 
-    # If the client didn’t send JSON or it’s malformed, return a 400
-    if not data or "prompt" not in data:
-        return jsonify({"error": "Missing 'prompt' field in JSON body."}), 400
+    if not raw_prompt:
+        return jsonify({"reply": "Please type a question."}), 400
 
-    user_prompt = data["prompt"]
-    # Compute the best reply based on keyword detection
-    bot_reply = find_reply(user_prompt)
+    # Expand with synonyms before running find_reply logic:
+    expanded = expand_with_synonyms(raw_prompt)
+    # Find reply from RESPONSES
+    reply = find_reply(expanded)
 
-    # Return as JSON
-    return jsonify({"reply": bot_reply})
+    return jsonify({"reply": reply})
 
 
-# ─── Run the app ─────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    # Use PORT env var if provided (e.g., for hosting); default to 5000
-    port = int(os.getenv("PORT", 5000))
-    # FLASK_DEBUG is handled by Config.DEBUG via .env
-    app.run(host="0.0.0.0", port=port, debug=app.config["DEBUG"])
+    # Running in debug mode for development; remove debug=True in production
+    app.run(host="127.0.0.1", port=5000, debug=True)
