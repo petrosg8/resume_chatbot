@@ -15,15 +15,13 @@ SYNONYMS = {
     "skillset": ["skills"],
     "competencies": ["skills"],
     "expertise": ["skills"],
-    "cv": ["resume"],         
-    "profile": ["resume"],
+    "language": ["skills"],
+    "languages": ["skills"],
     "devops": ["docker", "kubernetes"],
     "containers": ["docker", "kubernetes"],
     "cloud": ["aws", "lambda", "azure"],
     "uni": ["study", "education", "school"],
     "degree": ["education"],
-    "hobby": ["hobbies"],
-    "interest": ["hobbies"],
 }
 
 
