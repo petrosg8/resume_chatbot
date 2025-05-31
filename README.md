@@ -172,7 +172,7 @@ You need to run the backend (Flask) and frontend (Vite) concurrently in separate
 
 ### Start Backend
 
-1. Activate your virtual environment (if not already active):
+1. Activate virtual environment (if not already active):
 
    ```bash
    cd backend
@@ -216,6 +216,6 @@ You need to run the backend (Flask) and frontend (Vite) concurrently in separate
    ➜  Network: use --host to expose
    ```
 
-3. Open your browser and go to `http://localhost:5173/`.
+3. Open browser and go to `http://localhost:5173/`.
 
 At this point, you should see the chat interface. Try typing a question like “What are your skills?” and press Enter or click **Send**.
