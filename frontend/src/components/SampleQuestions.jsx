@@ -1,4 +1,5 @@
 // frontend/src/components/SampleQuestions.jsx
+
 import React from "react";
 
 export default function SampleQuestions({ onAsk }) {
@@ -16,7 +17,9 @@ export default function SampleQuestions({ onAsk }) {
         <button
           key={idx}
           onClick={() => onAsk(q)}
-          className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm hover:bg-gray-300 transition"
+          className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm
+                     hover:bg-gray-300 transition
+                     dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
         >
           {q}
         </button>

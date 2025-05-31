@@ -2,126 +2,159 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
 import MessageList from "./MessageList";
 import SampleQuestions from "./SampleQuestions";
 import MessageInput from "./MessageInput";
 
 export default function ChatBot() {
-  // messages: array of { sender: "user" | "bot", text: string }
+  //  Theme state (light/dark), persisted in localStorage
+  const [isDark, setIsDark] = useState(() => {
+    const stored = localStorage.getItem("theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  //  When isDark changes, toggle 'dark' class on <html> and store preference
+  useEffect(() => {
+    const root = window.document.documentElement; 
+    if (isDark) {
+      root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDark]);
+
+  //  Helper to toggle theme
+  function toggleTheme() {
+    setIsDark((prev) => !prev);
+  }
+
+  //  Chat messages state: { sender: "user"|"bot", text: string, time: "HH:MM" }
   const [messages, setMessages] = useState([
     {
       sender: "bot",
       text: "👋 Hi there! Ask me anything about my CV.",
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
-  ])
+  ]);
 
-  // Reference to auto-scroll to bottom
   const bottomRef = useRef(null);
 
-  // Whenever messages change, scroll to the bottom:
+  //  Scroll down on every new message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-   // Utility to get a “HH:MM” timestamp
-   function getTimestamp() {
+  //  Utility to get current time as "HH:MM"
+  function getTimestamp() {
     return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  // Called when user types OR clicks a sample question
+  //  When user sends a prompt (typed or clicked), update state and call backend
   async function handleSend(userText) {
     if (!userText.trim()) return;
+    const now = getTimestamp();
 
-    // Add the user's message with timestamp
-    const userMsg = {
-      sender: "user",
-      text: userText.trim(),
-      time: getTimestamp(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    //  Append user message
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: userText.trim(), time: now },
+    ]);
 
-    // Add a “thinking” placeholder with timestamp
-    const thinkingMsg = {
+    //  Append "thinking" placeholder
+    setMessages((prev) => [
+      ...prev,
+      { sender: "bot", text: "🤖 Thinking...", time: now },
+    ]);
+
+    try {
+      //  POST to Flask /chat
+      const response = await axios.post("http://127.0.0.1:5000/chat", {
+        prompt: userText.trim(),
+      });
+
+      const botReplyText = response.data.reply || "Sorry, no reply received.";
+      const replyTimestamp = getTimestamp();
+      const botMsg = { sender: "bot", text: botReplyText, time: replyTimestamp };
+
+      //  Replace only the last "thinking" placeholder with real reply
+      setMessages((prev) => {
+        const withoutPlaceholder = prev.filter(
+          (msg, idx) =>
+            !(
+              msg.sender === "bot" &&
+              msg.text === "🤖 Thinking..." &&
+              idx === prev.length - 1
+            )
+        );
+        return [...withoutPlaceholder, botMsg];
+      });
+    } catch (err) {
+      console.error("Error fetching reply:", err);
+      const errorTimestamp = getTimestamp();
+      const errorMsg = {
         sender: "bot",
-        text: "🤖 Thinking...",
-        time: getTimestamp(),
+        text: "😕 Oops! Something went wrong. Please try again.",
+        time: errorTimestamp,
       };
-      setMessages((prev) => [...prev, thinkingMsg]);
-
-      try {
-        // Send POST to Flask backend
-        const response = await axios.post("http://127.0.0.1:5000/chat", {
-          prompt: userText.trim(),
-        });
-  
-        const botReplyText = response.data.reply || "Sorry, no reply received.";
-        const botMsg = {
-          sender: "bot",
-          text: botReplyText,
-          time: getTimestamp(),
-        };
-  
-        //  Replace the thinking placeholder with actual botReply
-        setMessages((prev) => {
-          // Filter out exactly the last “🤖 Thinking...” placeholder
-          const withoutPlaceholder = prev.filter(
-            (msg, idx) => !(msg.sender === "bot" && msg.text === "🤖 Thinking..." && idx === prev.length - 1)
-          );
-          return [...withoutPlaceholder, botMsg];
-        });
-      } catch (err) {
-        console.error("Error fetching reply:", err);
-        const errorMsg = {
-          sender: "bot",
-          text: "😕 Oops! Something went wrong. Please try again.",
-          time: getTimestamp(),
-        };
-        setMessages((prev) => {
-          const withoutPlaceholder = prev.filter(
-            (msg, idx) => !(msg.sender === "bot" && msg.text === "🤖 Thinking..." && idx === prev.length - 1)
-          );
-          return [...withoutPlaceholder, errorMsg];
-        });
-      }
+      setMessages((prev) => {
+        const withoutPlaceholder = prev.filter(
+          (msg, idx) =>
+            !(
+              msg.sender === "bot" &&
+              msg.text === "🤖 Thinking..." &&
+              idx === prev.length - 1
+            )
+        );
+        return [...withoutPlaceholder, errorMsg];
+      });
     }
+  }
 
   return (
     <div className="flex-1 flex flex-col h-full">
-      {/* ─── SCROLLABLE REGION ────────────────────────────────────────────── */}
-      {/* 
-        - h-0 flex-1: forces this div to occupy exactly the “leftover” space.
-        - overflow-y-auto: only *this* area scrolls vertically.
-        - scroll-smooth: smooth scrolling when new messages appear.
-      */}
-      <div className="h-0 flex-1 overflow-y-auto scroll-smooth">
+      {/* ─────────────── Scrollable region with sticky header ─────────────── */}
+      <div className="h-0 flex-1 overflow-y-auto chat-scrollbar bg-gray-100 dark:bg-gray-900 scroll-smooth">
         {/*
-          ──────────────────── Sticky Header ────────────────────
-          - sticky top-0: pins this header to the top of the scroll container.
-          - z-10: ensures it sits above the messages as they scroll under it.
-          - bg-teal-500: teal background
-          - px-6 py-4: padding
+          Sticky header inside the scroll area:
+          - bg-teal-500 (light) / dark:bg-teal-700 (dark)
+          - px-6 py-4 for padding
+          - flex justify-between to place title and toggle on same line
+          - z-10 so it stays above the messages
         */}
-        <div className="sticky top-0 z-10 bg-teal-500 px-6 py-4">
-          <h1 className="text-white text-xl font-semibold text-center">
-            Petros Gerogiannis Resume Chatbot
-          </h1>
+        <div className="sticky top-0 z-10 bg-teal-500 dark:bg-teal-700 px-6 py-4 flex items-center justify-between">
+          <h1 className="text-white text-xl font-semibold">Petros Gerogiannis Resume Chatbot</h1>
+          <button
+            onClick={toggleTheme}
+            className="p-1 rounded-full bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-300"
+            aria-label="Toggle dark mode"
+          >
+            {isDark ? (
+              <SunIcon className="h-6 w-6 text-white" />
+            ) : (
+              <MoonIcon className="h-6 w-6 text-white" />
+            )}
+          </button>
         </div>
 
-        {}
+        {/* ─────────────── Messages List ─────────────── */}
         <div className="px-4 py-2">
           <MessageList messages={messages} />
           <div ref={bottomRef} />
         </div>
       </div>
 
-      {/* ───  Sample Questions Row (never scrolls) ────────────────────────── */}
-      <div className="border-t border-gray-200 p-2 bg-white">
+      {/* ─────────────── Sample Questions Row ─────────────── */}
+      <div className="border-t border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800">
         <SampleQuestions onAsk={handleSend} />
       </div>
 
-      {/* ─── 4) Input Area (never scrolls) ─────────────────────────────────── */}
-      <div className="border-t border-gray-200 px-4 py-2 bg-white">
+      {/* ─────────────── Input Area ─────────────── */}
+      <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 bg-white dark:bg-gray-800">
         <MessageInput onSend={handleSend} />
       </div>
     </div>

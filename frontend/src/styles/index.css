@@ -5,16 +5,43 @@
 @tailwind utilities;
 
 
-html,
-body,
+html {
+  height: 100%;
+  background-color: theme("colors.gray.50");
+}
+body {
+  height: 100%;
+  margin: 0; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: inherit;
+}
 #root {
-  @apply bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center;
+  height: 100%;
+  background-color: inherit;
 }
 
+.dark html {
+  background-color: theme("colors.gray.900");
+}
+.dark body {
+  background-color: inherit;
+}
+.dark #root {
+  background-color: inherit;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Smooth‐scrolling utility
+──────────────────────────────────────────────────────────────── */
 .scroll-smooth {
   scroll-behavior: smooth;
 }
 
+/* ───────────────────────────────────────────────────────────────
+   Custom scrollbar (light/dark thumb)
+──────────────────────────────────────────────────────────────── */
 .chat-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -25,7 +52,7 @@ body,
 .chat-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-gray-300 rounded;
 }
-/* Dark‐mode thumb (overrides) */
+/* Dark‐mode thumb override */
 .dark .chat-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-gray-600 rounded;
 }
