@@ -1,0 +1,28 @@
+/* frontend/src/styles/index.css */
+
+/*  Import Tailwind’s base styles, components, and utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  @apply bg-gray-50 min-h-screen flex items-center justify-center;
+}
+
+/*  Smooth‐scroll behavior (so new messages scroll gently) */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/*  Custom scrollbar for the chat messages area */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded;
+}
